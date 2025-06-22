@@ -4,9 +4,10 @@ from google.cloud import storage
 from werkzeug.utils import secure_filename
 import os
 import uuid
+from datetime import timedelta
 
 # Set your GCS bucket name here:
-GCS_BUCKET_NAME = ' my-image-classifier-bucket-987654321'  # <== replace this!
+GCS_BUCKET_NAME = 'my-image-classifier-bucket-987654321'  # <== replace this!
 
 # Init Flask app
 app = Flask(__name__)
@@ -35,8 +36,8 @@ def index():
         blob = bucket.blob(unique_filename)
         blob.upload_from_string(content, content_type=file.content_type)
 
-        # Build public URL manually (no .make_public())
-        image_url = f"https://storage.googleapis.com/{GCS_BUCKET_NAME}/{unique_filename}"
+        # Generate signed URL (valid 1 hour)
+        image_url = blob.generate_signed_url(expiration=timedelta(hours=1))
 
         # Vision API call
         client = vision.ImageAnnotatorClient()
@@ -46,4 +47,7 @@ def index():
 
         result = ', '.join([label.description for label in labels])
 
-    return render_template('index.html', result=result_
+    return render_template('index.html', result=result, image_url=image_url)
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=8080)

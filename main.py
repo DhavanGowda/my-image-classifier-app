@@ -7,7 +7,7 @@ import uuid
 from datetime import timedelta
 
 # Set your GCS bucket name here:
-GCS_BUCKET_NAME = 'my-image-classifier-bucket-987654321'  # <== your bucket name
+GCS_BUCKET_NAME = 'my-image-classifier-bucket-987654321'  # your bucket name
 
 # Init Flask app
 app = Flask(__name__)
@@ -45,4 +45,12 @@ def index():
         # Vision API call
         client = vision.ImageAnnotatorClient()
         image = vision.Image(source=vision.ImageSource(gcs_image_uri=gcs_uri))
-        response = client.label_detection(image=image_
+        response = client.label_detection(image=image)
+        labels = response.label_annotations
+
+        result = ', '.join([label.description for label in labels])
+
+    return render_template('index.html', result=result, image_url=image_url)
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=8080)

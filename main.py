@@ -1,13 +1,15 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect
 from google.cloud import vision
-import os
+from google.cloud import storage
 from werkzeug.utils import secure_filename
+import os
+import uuid
 
+# Set your GCS bucket name here:
+GCS_BUCKET_NAME = 'my-image-classifier-bucket-987654321'  # <== replace this!
+
+# Init Flask app
 app = Flask(__name__)
-
-# Set the upload folder path
-UPLOAD_FOLDER = 'static/uploads'
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -17,32 +19,33 @@ def index():
     if request.method == 'POST':
         if 'image' not in request.files:
             return redirect(request.url)
-        
+
         file = request.files['image']
         if file.filename == '':
             return redirect(request.url)
-        
+
+        # Prepare filename and read image content
         filename = secure_filename(file.filename)
-        filepath = os.path.join(UPLOAD_FOLDER, filename)
-        file.save(filepath)
+        unique_filename = f"{uuid.uuid4()}_{filename}"
+        content = file.read()
 
-        # Create Vision API client
+        # Upload image to GCS bucket
+        storage_client = storage.Client()
+        bucket = storage_client.bucket(GCS_BUCKET_NAME)
+        blob = bucket.blob(unique_filename)
+        blob.upload_from_string(content, content_type=file.content_type)
+
+        # Make URL public
+        blob.make_public()
+        image_url = blob.public_url
+
+        # Vision API call
         client = vision.ImageAnnotatorClient()
+        image = vision.Image(source=vision.ImageSource(image_uri=image_url))
+        response = client.label_detection(image=image)
+        labels = response.label_annotations
 
-        # Read image file
-        with open(filepath, 'rb') as image_file:
-            content = image_file.read()
-            image = vision.Image(content=content)
-
-            # Perform label detection
-            response = client.label_detection(image=image)
-            labels = response.label_annotations
-
-            # Format result
-            result = ', '.join([label.description for label in labels])
-
-        # Generate URL for the uploaded image
-        image_url = url_for('static', filename=f'uploads/{filename}')
+        result = ', '.join([label.description for label in labels])
 
     return render_template('index.html', result=result, image_url=image_url)
 

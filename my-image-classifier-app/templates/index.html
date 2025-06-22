@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Image Classifier</title>
+</head>
+<body>
+    <h1>Upload an Image</h1>
+    <form method="POST" enctype="multipart/form-data">
+        <input type="file" name="image" required>
+        <input type="submit" value="Classify">
+    </form>
+
+    {% if labels %}
+        <h2>Detected Labels:</h2>
+        <ul>
+        {% for label in labels %}
+            <li>{{ label }}</li>
+        {% endfor %}
+        </ul>
+    {% endif %}
+</body>
+</html>

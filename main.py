@@ -4,6 +4,8 @@ import os
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
+
+# Set the upload folder path
 UPLOAD_FOLDER = 'static/uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
@@ -24,15 +26,22 @@ def index():
         filepath = os.path.join(UPLOAD_FOLDER, filename)
         file.save(filepath)
 
-        # Load image into Vision API
+        # Create Vision API client
         client = vision.ImageAnnotatorClient()
+
+        # Read image file
         with open(filepath, 'rb') as image_file:
             content = image_file.read()
             image = vision.Image(content=content)
+
+            # Perform label detection
             response = client.label_detection(image=image)
             labels = response.label_annotations
+
+            # Format result
             result = ', '.join([label.description for label in labels])
 
+        # Generate URL for the uploaded image
         image_url = url_for('static', filename=f'uploads/{filename}')
 
     return render_template('index.html', result=result, image_url=image_url)

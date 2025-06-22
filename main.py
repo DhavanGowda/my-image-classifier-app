@@ -36,12 +36,15 @@ def index():
         blob = bucket.blob(unique_filename)
         blob.upload_from_string(content, content_type=file.content_type)
 
-        # Generate signed URL (valid 1 hour)
+        # Signed URL for display (so we can show image in browser)
         image_url = blob.generate_signed_url(expiration=timedelta(hours=1))
+
+        # GCS URI for Vision API
+        gcs_uri = f"gs://{GCS_BUCKET_NAME}/{unique_filename}"
 
         # Vision API call
         client = vision.ImageAnnotatorClient()
-        image = vision.Image(source=vision.ImageSource(image_uri=image_url))
+        image = vision.Image(source=vision.ImageSource(gcs_image_uri=gcs_uri))
         response = client.label_detection(image=image)
         labels = response.label_annotations
 

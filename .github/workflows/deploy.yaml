@@ -16,7 +16,7 @@ jobs:
     - name: Setup Google Cloud SDK
       uses: google-github-actions/setup-gcloud@v2
       with:
-        project_id: YOUR_PROJECT_ID
+        project_id: 	my-image-classifier-app
         service_account_key: ${{ secrets.GCP_SA_KEY }}
 
     - name: Deploy to App Engine

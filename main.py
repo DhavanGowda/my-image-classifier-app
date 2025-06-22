@@ -36,8 +36,8 @@ def index():
         blob = bucket.blob(unique_filename)
         blob.upload_from_string(content, content_type=file.content_type)
 
-        # Signed URL for display in browser (valid for 1 hour)
-        image_url = blob.generate_signed_url(expiration=timedelta(hours=1))
+        # Use V4 signed URL — works on App Engine service account
+        image_url = blob.generate_signed_url(expiration=timedelta(hours=1), version="v4")
 
         # GCS URI for Vision API
         gcs_uri = f"gs://{GCS_BUCKET_NAME}/{unique_filename}"
